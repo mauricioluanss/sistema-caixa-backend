@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// entidades de relacionamento
+model Produto {
+  id            Int     @id @default(autoincrement())
+  descricao     String
+  qtdEstoque    Int
+  valorUnitario Decimal @db.Decimal(5, 2)
+
+  vendas ProdutosVenda[]
+}
+
+model Venda {
+  id              Int      @id @default(autoincrement())
+  valorTotal      Decimal  @db.Decimal(5, 2)
+  metodoPagamento String
+  dataHora        DateTime @default(now())
+  operadorId      Int
+  operador        Operador @relation(fields: [operadorId], references: [id])
+
+  produtos ProdutosVenda[]
+}
+
+model ProdutosVenda {
+  vendaId Int
+  venda   Venda @relation(fields: [vendaId], references: [id])
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  valorUnitario Decimal @db.Decimal(5, 2)
+  qtd           Int
+  valorTotal    Decimal @db.Decimal(5, 2)
+
+  @@id([vendaId, produtoId])
+}
+
+model Operador {
+  id       Int     @id @default(autoincrement())
+  nome     String
+  username String  @unique
+  password String
+  cpf      String  @unique
+  vendas   Venda[]
+}

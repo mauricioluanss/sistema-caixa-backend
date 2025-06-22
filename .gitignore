@@ -1,0 +1,9 @@
+# Keep environment variables out of version control
+.env
+generated
+/generated/prisma
+prisma/migrations/
+node_modules/
+dist/
+build/
+npm-debug.log
