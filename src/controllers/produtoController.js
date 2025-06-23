@@ -63,7 +63,9 @@ exports.atualizaProduto = async (req, res) => {
       data: req.body,
     });
 
-    res.status(200).json(atualizarProduto);
+    res
+      .status(200)
+      .json({ msg: 'Produto atualizado', retorno: atualizarProduto });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Nao foi possivel atualizar o produto.' });
