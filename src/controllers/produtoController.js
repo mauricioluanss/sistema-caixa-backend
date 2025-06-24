@@ -1,14 +1,16 @@
 const prisma = require('../prisma/client');
+const produtoService = require('../services/produtoService');
 
 //Aqui ta o meu CRUD pra model de produtos
 
 exports.criaProduto = async (req, res) => {
   try {
-    const objetoProduto = { data: req.body };
-    const novoProduto = await prisma.produto.create(objetoProduto);
-
-    res.status(201).json({ msg: 'produto cadastrado', produto: novoProduto });
+    const produto = await produtoService.cria(req.body);
+    res.status(201).json({ msg: 'produto cadastrado', produto: produto });
   } catch (error) {
+    if (error.message === 'Corpo da requisição não é válido') {
+      return res.status(400).json({ erro: error.message });
+    }
     console.error('Erro ao criar produto: ', error);
     res.status(500).json({ erro: 'Falha ao cadastrar o(s) produto(s)' });
   }
