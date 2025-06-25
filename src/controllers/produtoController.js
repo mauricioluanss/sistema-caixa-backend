@@ -1,91 +1,81 @@
-const prisma = require('../prisma/client');
+// controller para a model de produtos
 const produtoService = require('../services/produtoService');
 
-//Aqui ta o meu CRUD pra model de produtos
-
-exports.criaProduto = async (req, res) => {
+const handleCreateProduto = async (req, res) => {
   try {
-    const produto = await produtoService.cria(req.body);
-    res.status(201).json({ msg: 'produto cadastrado', produto: produto });
+    const produto = await produtoService.createProduto(req.body);
+    return res
+      .status(201)
+      .json({ msg: 'produto cadastrado', produto: produto });
   } catch (error) {
     if (error.message === 'Corpo da requisição não é válido') {
       return res.status(400).json({ erro: error.message });
     }
     console.error('Erro ao criar produto: ', error);
-    res.status(500).json({ erro: 'Falha ao cadastrar o(s) produto(s)' });
+    return res.status(500).json({ erro: 'Falha ao cadastrar os produtos' });
   }
 };
 
-exports.todosProdutos = async (req, res) => {
+const handleGetProdutos = async (req, res) => {
   try {
-    const todosProdutos = await prisma.produto.findMany();
-
-    // pra mostrar o valor do produto com 2 casas decimais
-    const valorUnitarioFormatado = todosProdutos.map((produto) => ({
-      ...produto,
-      valorUnitario: Number(produto.valorUnitario).toFixed(2),
-    }));
-
-    res.status(200).json(valorUnitarioFormatado);
+    const todosProdutos = await produtoService.getProdutos();
+    return res.status(200).json(todosProdutos);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ erro: 'Falha ao buscar os produtos.' });
+    return res.status(500).json({ erro: 'Falha ao buscar os produtos' });
   }
 };
 
-exports.produtoPorId = async (req, res) => {
+const handleGetProduto = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const produtoPorId = await prisma.produto.findUnique({
-      where: { id: id },
-    });
-
-    // pra mostrar o valor do produto com 2 casas decimais
-    const produtoFormatado = {
-      ...produtoPorId,
-      valorUnitario: Number(produtoPorId.valorUnitario).toFixed(2),
-    };
-
-    if (!produtoPorId) {
-      return res.status(404).json({ erro: `Produto ${id} não encontrado.` });
+    const id = req.params.id;
+    const produto = await produtoService.getProduto(id);
+    return res.status(200).json(produto);
+  } catch (error) {
+    if (error.message.includes('Produto não existe na base')) {
+      return res.status(404).json({ erro: error.message });
     }
-
-    res.status(200).json(produtoFormatado);
-  } catch (error) {
     console.error(error);
-    res.status(500).json({ erro: 'Não foi possivel encontrar o produto.' });
+    return res.status(500).json({ erro: 'Não foi possivel realizar a busca.' });
   }
 };
 
-exports.atualizaProduto = async (req, res) => {
+const handlePutProduto = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const atualizarProduto = await prisma.produto.update({
-      where: { id: id },
-      data: req.body,
-    });
-
-    res
+    const id = req.params.id;
+    const body = req.body;
+    const produtoAtualizado = await produtoService.putProduto(id, body);
+    return res
       .status(200)
-      .json({ msg: 'Produto atualizado', retorno: atualizarProduto });
+      .json({ msg: 'Produto atualizado', retorno: produtoAtualizado });
   } catch (error) {
+    if (error.message.includes('Produto nao existe na base')) {
+      return res.status(404).json({ erro: error.message });
+    }
     console.error(error);
-    res.status(500).json({ erro: 'Nao foi possivel atualizar o produto.' });
+    return res
+      .status(500)
+      .json({ erro: 'Nao foi possivel atualizar o produto' });
   }
 };
 
-exports.deletaProduto = async (req, res) => {
+const handleDeleteProduto = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    await prisma.produto.delete({
-      where: { id: id },
-    });
-
-    res.status(204).json();
+    const id = req.params.id;
+    produtoService.deleteProduto(id);
+    return res.status(204).json();
   } catch (error) {
     console.error(error);
-    res
+    return res
       .status(500)
-      .json({ erro: 'Não foi possivel excluir o produto informado.' });
+      .json({ erro: 'Não foi possivel excluir o produto informado' });
   }
+};
+
+module.exports = {
+  handleCreateProduto,
+  handleGetProdutos,
+  handleGetProduto,
+  handlePutProduto,
+  handleDeleteProduto,
 };
