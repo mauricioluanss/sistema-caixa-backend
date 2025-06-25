@@ -3,42 +3,57 @@ const produtoService = require('../services/produtoService');
 
 //Aqui ta o meu CRUD pra model de produtos
 
-const handleCreateProduto = async (req, res) => {
+exports.criaProduto = async (req, res) => {
   try {
-    const produto = await produtoService.createProduto(req.body);
-    return res
-      .status(201)
-      .json({ msg: 'produto cadastrado', produto: produto });
+    const produto = await produtoService.cria(req.body);
+    res.status(201).json({ msg: 'produto cadastrado', produto: produto });
   } catch (error) {
-    if (error.message.includes('Corpo da requisição não é válido')) {
+    if (error.message === 'Corpo da requisição não é válido') {
       return res.status(400).json({ erro: error.message });
     }
     console.error('Erro ao criar produto: ', error);
-    return res.status(500).json({ erro: 'Falha ao cadastrar o(s) produto(s)' });
+    res.status(500).json({ erro: 'Falha ao cadastrar o(s) produto(s)' });
   }
 };
 
-const handleGetProdutos = async (req, res) => {
+exports.todosProdutos = async (req, res) => {
   try {
-    const produtos = await produtoService.getProdutos();
-    return res.status(200).json(produtos);
+    const todosProdutos = await prisma.produto.findMany();
+
+    // pra mostrar o valor do produto com 2 casas decimais
+    const valorUnitarioFormatado = todosProdutos.map((produto) => ({
+      ...produto,
+      valorUnitario: Number(produto.valorUnitario).toFixed(2),
+    }));
+
+    res.status(200).json(valorUnitarioFormatado);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ erro: 'Falha ao buscar os produtos' });
+    res.status(500).json({ erro: 'Falha ao buscar os produtos.' });
   }
 };
 
-const handleGetProdutoPorId = async (req, res) => {
+exports.produtoPorId = async (req, res) => {
   try {
-    const id = req.params.id;
-    const produto = await produtoService.getProdutoPorId(id);
-    return res.status(200).json(produto);
-  } catch (error) {
-    if (error.message.includes('produto não encontrado')) {
-      return res.status(404).json({ erro: error.message });
+    const id = parseInt(req.params.id);
+    const produtoPorId = await prisma.produto.findUnique({
+      where: { id: id },
+    });
+
+    // pra mostrar o valor do produto com 2 casas decimais
+    const produtoFormatado = {
+      ...produtoPorId,
+      valorUnitario: Number(produtoPorId.valorUnitario).toFixed(2),
+    };
+
+    if (!produtoPorId) {
+      return res.status(404).json({ erro: `Produto ${id} não encontrado.` });
     }
+
+    res.status(200).json(produtoFormatado);
+  } catch (error) {
     console.error(error);
-    return res.status(500).json({ erro: 'Falha ao buscar o produto' });
+    res.status(500).json({ erro: 'Não foi possivel encontrar o produto.' });
   }
 };
 
@@ -73,10 +88,4 @@ exports.deletaProduto = async (req, res) => {
       .status(500)
       .json({ erro: 'Não foi possivel excluir o produto informado.' });
   }
-};
-
-module.exports = {
-  handleCreateProduto,
-  handleGetProdutos,
-  handleGetProdutoPorId,
 };
