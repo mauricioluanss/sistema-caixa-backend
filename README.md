@@ -65,6 +65,9 @@ Este comando irá criar todas as tabelas necessárias no seu novo banco de dados
 
 ```bash
 npx prisma migrate dev
+npx prisma generate
+
+se der problema, rode npx prisma migrate reset
 ```
 
 ## Rodando a Aplicação
